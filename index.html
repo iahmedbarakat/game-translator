@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مترجم الألعاب</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مترجم الألعاب">
+<meta name="theme-color" content="#0f1316">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{--bg:#0f1316;--card:#182027;--line:#26313a;--text:#f2f5f7;--muted:#8d9aa5;--accent:#3fbf8f;--accent2:#2a8f69;--err:#e0655a;--ar:24px}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"SF Arabic","Geeza Pro","Segoe UI",Tahoma,sans-serif}
+  body{padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 28px)}
+  .wrap{max-width:560px;margin:0 auto}
+  header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  header h1{font-size:22px;font-weight:800;margin:0}
+  header svg{width:26px;height:26px}
+  .engine{color:var(--muted);font-size:13px;margin:0 0 14px;min-height:18px}
+  .engine.ok{color:var(--accent)}
+  button{font-family:inherit}
+  .big{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:19px;border:0;border-radius:18px;background:var(--accent);color:#06281b;font-size:20px;font-weight:800;cursor:pointer}
+  .big:active{background:var(--accent2)} .big:disabled{opacity:.5}
+  .big svg{width:26px;height:26px}
+  .row{display:flex;gap:10px;margin-top:10px}
+  .ghost{flex:1;padding:13px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:16px;cursor:pointer}
+  .ghost:disabled{opacity:.5}
+  input[type=file]{display:none}
+  .hint{color:var(--muted);font-size:15px;line-height:1.6;margin:12px 0 10px}
+  .stage{position:relative;border-radius:14px;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
+  .stage img{display:block;width:100%;pointer-events:none}
+  .sel{position:absolute;border:2px solid var(--accent);background:rgba(63,191,143,.12);box-shadow:0 0 0 9999px rgba(0,0,0,.45);display:none;pointer-events:none}
+  .card{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+  .status{color:var(--muted);font-size:15px;display:flex;align-items:center;gap:8px}
+  .spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite;flex:none}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .ar{font-size:var(--ar);font-weight:700;line-height:1.7;white-space:pre-wrap}
+  .err{color:var(--err);line-height:1.6}
+  details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  summary{color:var(--muted);font-size:14px;cursor:pointer}
+  textarea{width:100%;margin-top:8px;min-height:84px;direction:ltr;text-align:left;background:#0f1316;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:15px/1.5 -apple-system,system-ui,sans-serif}
+  .small{padding:10px;font-size:15px;margin-top:8px;width:100%}
+  .settings{display:flex;align-items:center;justify-content:space-between;margin-top:14px;color:var(--muted);font-size:15px}
+  .settings button{width:40px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:18px;font-weight:700}
+  h2{font-size:16px;color:var(--muted);font-weight:500;margin:26px 0 8px;display:flex;justify-content:space-between;align-items:center}
+  h2 button{background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline}
+  .h{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;line-height:1.7}
+  .h .en{direction:ltr;text-align:left;color:var(--muted);font-size:13px;margin-top:4px;font-family:-apple-system,system-ui,sans-serif}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 24 24"><path d="M12 2 22 20H2Z" fill="#3fbf8f"/><path d="M12 11 17 20H7Z" fill="#0f1316"/></svg>
+    <h1>مترجم الألعاب</h1>
+  </header>
+  <p class="engine" id="engine">جاري تجهيز قارئ النص...</p>
+
+  <button class="big" id="shootBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    صوّر الشاشة
+  </button>
+  <div class="row"><button class="ghost" id="pickBtn" type="button">اختر صورة من الألبوم</button></div>
+  <input id="camInput" type="file" accept="image/*" capture="environment">
+  <input id="picInput" type="file" accept="image/*">
+
+  <section id="cropSec" class="hidden">
+    <p class="hint">اسحب إصبعك على الصورة وارسم مربع حول الكلام بس. هذا يخلي القراءة أدق بكثير.</p>
+    <div class="stage" id="stage"><img id="photo" alt=""><div class="sel" id="sel"></div></div>
+    <div class="row">
+      <button class="big" id="goBtn" type="button" style="flex:2">ترجم</button>
+      <button class="ghost" id="fullBtn" type="button">كل الصورة</button>
+    </div>
+  </section>
+
+  <section id="resultSec" class="card hidden">
+    <div id="resultBody"></div>
+    <details id="enBox">
+      <summary>النص الإنجليزي اللي انقرأ (تقدر تصححه)</summary>
+      <textarea id="enText" spellcheck="false"></textarea>
+      <button class="ghost small" id="retranslate" type="button">ترجم النص بعد التصحيح</button>
+    </details>
+  </section>
+
+  <div class="settings">
+    <span>حجم خط الترجمة</span>
+    <span><button type="button" id="minus">−</button> <button type="button" id="plus">+</button></span>
+  </div>
+
+  <h2 id="histTitle" class="hidden">الترجمات السابقة <button type="button" id="clearHist">مسح</button></h2>
+  <div id="hist"></div>
+</div>
+<script src="tesseract.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
