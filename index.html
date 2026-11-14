@@ -41,6 +41,7 @@
   @keyframes s{to{transform:rotate(360deg)}}
   .ar{font-size:var(--ar);font-weight:700;line-height:1.7;white-space:pre-wrap}
   .err{color:var(--err);line-height:1.6}
+  .src{color:var(--muted);font-size:12px;margin-top:8px}
   details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
   summary{color:var(--muted);font-size:14px;cursor:pointer}
   textarea{width:100%;margin-top:8px;min-height:84px;direction:ltr;text-align:left;background:#0f1316;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:15px/1.5 -apple-system,system-ui,sans-serif}
@@ -90,6 +91,10 @@
   </section>
 
   <div class="settings">
+    <span>المترجم</span>
+    <span data-engine-picker id="enginePick"></span>
+  </div>
+  <div class="settings">
     <span>حجم خط الترجمة</span>
     <span><button type="button" id="minus">−</button> <button type="button" id="plus">+</button></span>
   </div>
@@ -98,6 +103,7 @@
   <div id="hist"></div>
 </div>
 <script src="tesseract.min.js"></script>
+<script src="translate.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

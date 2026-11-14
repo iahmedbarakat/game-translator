@@ -41,6 +41,7 @@
     return workerReady;
   }
   initOCR();
+  GT.mountPicker($("enginePick"));
 
   // ---------------------------------------------------- الأزرار
   $("shootBtn").onclick = function () { $("camInput").value = ""; $("camInput").click(); };
@@ -226,53 +227,18 @@
   function translateAndShow(en, fromRun) {
     if (!fromRun) setButtons(false);
     status("جاري الترجمة...");
-    return translate(en).then(function (ar) {
+    return GT.translate(en).then(function (r) {
       var body = $("resultBody");
       body.innerHTML = "";
-      var d = document.createElement("div"); d.className = "ar"; d.textContent = ar;
-      body.appendChild(d);
+      var d = document.createElement("div"); d.className = "ar"; d.textContent = r.text;
+      var src = document.createElement("div"); src.className = "src"; src.textContent = "ترجمة " + r.engineName;
+      body.appendChild(d); body.appendChild(src);
       $("enText").value = en;
-      addHistory(en, ar);
+      addHistory(en, r.text);
     }).catch(function () {
       showError("قريت الكلام بس ما قدرت أترجمه. تأكد من الإنترنت واضغط \"ترجم النص بعد التصحيح\".");
       $("enBox").open = true;
     }).then(function () { if (!fromRun) setButtons(true); });
-  }
-
-  function translate(text) {
-    return google(text).catch(function () { return myMemory(text); }).then(function (ar) {
-      return fixNames(text, ar);
-    });
-  }
-  function google(text) {
-    var u = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=" + encodeURIComponent(text);
-    return timedFetch(u).then(function (j) {
-      var out = (j && j[0] || []).map(function (x) { return x && x[0] || ""; }).join("").trim();
-      if (!out) throw new Error("empty");
-      return out;
-    });
-  }
-  function myMemory(text) {
-    var u = "https://api.mymemory.translated.net/get?langpair=en%7Car&q=" + encodeURIComponent(text.slice(0, 480));
-    return timedFetch(u).then(function (j) {
-      var out = j && j.responseData && j.responseData.translatedText;
-      if (!out || j.responseStatus !== 200) throw new Error("mymemory");
-      return out.trim();
-    });
-  }
-  function timedFetch(u) {
-    var ctl = ("AbortController" in window) ? new AbortController() : null;
-    var t = setTimeout(function () { if (ctl) ctl.abort(); }, 12000);
-    return fetch(u, ctl ? { signal: ctl.signal } : {}).then(function (r) {
-      clearTimeout(t);
-      if (!r.ok) throw new Error("http " + r.status);
-      return r.json();
-    }, function (e) { clearTimeout(t); throw e; });
-  }
-  // أسماء زيلدا: Google أحيانًا يترجم Link إلى "رابط"
-  function fixNames(en, ar) {
-    if (/\bLink\b/.test(en)) ar = ar.replace(/(ال)?رابط/g, "لينك");
-    return ar;
   }
 
   // ---------------------------------------------------- عرض

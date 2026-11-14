@@ -82,6 +82,10 @@
     <p class="hint">حرّك الشريط لين تطلع جملة ترجمة، وبعدها ارسم بإصبعك مربع حول مكان الترجمة. المربع الأخضر هو المكان اللي بيقرأ منه.</p>
     <div class="stage" id="stage"><video id="setupVideo" playsinline muted preload="auto"></video><div class="sel" id="sel"></div></div>
     <input class="scrub" id="scrub" type="range" min="0" max="1000" value="0">
+    <div class="settings" style="margin-bottom:4px">
+      <span>المترجم</span>
+      <span id="enginePick"></span>
+    </div>
     <div class="row">
       <button class="big" id="startBtn" type="button" style="flex:2">ابدأ الترجمة</button>
       <button class="ghost" id="otherBtn" type="button">فيديو ثاني</button>
@@ -112,6 +116,7 @@
   </section>
 </div>
 <script src="tesseract.min.js"></script>
+<script src="translate.js"></script>
 <script src="video.js"></script>
 </body>
 </html>

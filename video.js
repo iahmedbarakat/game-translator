@@ -9,6 +9,7 @@
   var fileUrl = null, sel = null, cancelled = false, running = false;
   var segments = [];              // [{start,end,en,ar}]
   var subSize = 22;
+  var engines = {};
 
   function load(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -37,6 +38,7 @@
     return workerReady;
   }
   initOCR();
+  GT.mountPicker($("enginePick"));
 
   // ---------------------------------------------------- اختيار الفيديو
   $("pickBtn").onclick = pick;
@@ -325,6 +327,7 @@
   // ---------------------------------------------------- الترجمة
   function translateAll(segs) {
     var i = 0, failed = 0, cache = {};
+    engines = {};
     function next() {
       if (cancelled) return Promise.reject(new Error("cancel"));
       if (i >= segs.length) return Promise.resolve();
@@ -332,46 +335,14 @@
       setStatus("جاري الترجمة... " + i + " من " + segs.length);
       setBar(0.8 + 0.2 * i / segs.length);
       var key = s.en.toLowerCase();
-      var p = cache[key] ? Promise.resolve(cache[key]) : translate(s.en);
-      return p.then(function (ar) { cache[key] = ar; s.ar = ar; }, function () { failed++; s.ar = "⚠︎ " + s.en; })
+      var p = cache[key] ? Promise.resolve(cache[key]) : GT.translate(s.en);
+      return p.then(function (r) { cache[key] = r; s.ar = r.text; engines[r.engineName] = 1; }, function () { failed++; s.ar = "⚠︎ " + s.en; })
         .then(next);
     }
     return next().then(function () {
       if (failed === segs.length) throw new Error("translate");
     });
   }
-  function translate(text) {
-    return google(text).catch(function () { return myMemory(text); }).then(function (ar) {
-      if (/\bLink\b/.test(text)) ar = ar.replace(/(ال)?رابط/g, "لينك");
-      return ar;
-    });
-  }
-  function google(text) {
-    var u = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=" + encodeURIComponent(text);
-    return timedFetch(u).then(function (j) {
-      var out = (j && j[0] || []).map(function (x) { return x && x[0] || ""; }).join("").trim();
-      if (!out) throw new Error("empty");
-      return out;
-    });
-  }
-  function myMemory(text) {
-    var u = "https://api.mymemory.translated.net/get?langpair=en%7Car&q=" + encodeURIComponent(text.slice(0, 480));
-    return timedFetch(u).then(function (j) {
-      var out = j && j.responseData && j.responseData.translatedText;
-      if (!out || j.responseStatus !== 200) throw new Error("mymemory");
-      return out.trim();
-    });
-  }
-  function timedFetch(u) {
-    var ctl = ("AbortController" in window) ? new AbortController() : null;
-    var t = setTimeout(function () { if (ctl) ctl.abort(); }, 12000);
-    return fetch(u, ctl ? { signal: ctl.signal } : {}).then(function (r) {
-      clearTimeout(t);
-      if (!r.ok) throw new Error("http " + r.status);
-      return r.json();
-    }, function (e) { clearTimeout(t); throw e; });
-  }
-
   // ---------------------------------------------------- المشغّل
   function showPlayer() {
     $("setupSec").classList.add("hidden");
@@ -385,7 +356,8 @@
   }
   function renderLines() {
     var box = $("lines"); box.innerHTML = "";
-    $("linesTitle").textContent = "كل الجمل (" + segments.length + ")";
+    var used = Object.keys(engines);
+    $("linesTitle").textContent = "كل الجمل (" + segments.length + ")" + (used.length ? " · ترجمة " + used.join(" و ") : "");
     segments.forEach(function (s, i) {
       var d = document.createElement("div"); d.className = "line"; d.id = "ln" + i;
       var tm = document.createElement("span"); tm.className = "tm"; tm.textContent = fmt(s.start);
