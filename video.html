@@ -41,7 +41,7 @@
   .err{color:var(--err)}
   .player{position:relative;border-radius:14px;overflow:hidden;background:#000}
   .player video{display:block;width:100%;max-height:70vh;background:#000}
-  .subs{min-height:64px;padding:10px 6px;text-align:center;pointer-events:none;background:#0b0e10;display:flex;align-items:center;justify-content:center}
+  .subs{height:calc(var(--sub) * 3.4 + 16px);padding:8px 10px;text-align:center;pointer-events:none;background:#0b0e10;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .player.big-mode{flex-direction:column}
   .player.big-mode .subs{position:absolute;left:4%;right:4%;background:none;min-height:0}
   .subs span{display:inline-block;background:rgba(0,0,0,.72);color:#fff;font-size:var(--sub);font-weight:700;line-height:1.55;padding:6px 14px;border-radius:10px;white-space:pre-wrap}
@@ -61,7 +61,7 @@
   .procard{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px}
   .procard textarea{width:100%;min-height:80px;margin-top:8px;direction:ltr;text-align:left;background:#0f1316;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.5 -apple-system,system-ui,sans-serif}
   .procard .big{margin-top:10px}
-  .linkbtn{display:block;text-align:center;text-decoration:none;margin-top:6px}
+  .linkbtn{text-align:center;text-decoration:none}
   .note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:10px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
   .note button{background:none;border:0;color:var(--accent);font-size:14px;text-decoration:underline;flex:none}
   .hidden{display:none !important}
@@ -119,17 +119,8 @@
       <span><button type="button" id="minus">−</button> <button type="button" id="plus">+</button></span>
     </div>
     <div class="procard">
-      <button class="big" id="proBtn" type="button">✨ ترجمة احترافية بـ Claude</button>
-      <div id="proPanel" class="hidden">
-        <div class="hint" id="proCopied"></div>
-        <textarea id="proOut" class="hidden" readonly></textarea>
-        <a class="ghost linkbtn" id="proLink" href="https://claude.ai/artifact/7sdPWeCciJfvCvkLennubT" target="_blank" rel="noopener">١) افتح صفحة الترجمة الاحترافية والصق النص</a>
-        <p class="hint">٢) هناك اضغط "ترجم" ثم "انسخ الترجمة"، وارجع هنا:</p>
-        <button class="ghost" id="proPaste" type="button" style="width:100%">الصق الترجمة</button>
-        <textarea id="proIn" placeholder="أو الصقها هنا يدويًا..." spellcheck="false"></textarea>
-        <button class="big" id="proApply" type="button">طبّق الترجمة الاحترافية</button>
-        <div class="status" id="proStatus"></div>
-      </div>
+      <a class="big linkbtn" href="https://claude.ai/artifact/4LQxZpiciCMrr2M9eXxrbr" target="_blank" rel="noopener">✨ مترجم الفيديو الاحترافي (Claude)</a>
+      <p class="hint" style="margin:10px 2px 2px">Claude يقرأ الترجمة الإنجليزية من الفيديو بنفسه ويترجم المقطع كامل وهو فاهم القصة. أدق بكثير، بس ياخذ من استخدامك في Claude.</p>
     </div>
     <h2 id="linesTitle">كل الجمل</h2>
     <div id="lines"></div>

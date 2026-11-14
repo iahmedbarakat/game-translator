@@ -11,7 +11,6 @@
   var subSize = 22;
   var engines = {};
   var fileSig = "";
-  var PRO_NAME = "Claude";
 
   // نحفظ الترجمة لكل فيديو، عشان لو رجعت له ما تحتاج تعيد القراءة
   function getCache(sig) { var all = load("gt_vcache", {}); return all[sig] || null; }
@@ -367,9 +366,6 @@
   // ---------------------------------------------------- المشغّل
   function showPlayer(fromCache) {
     $("cachedNote").classList.toggle("hidden", !fromCache);
-    $("proPanel").classList.add("hidden");
-    $("proStatus").textContent = "";
-    $("proIn").value = "";
     lastIdx = -2;
     $("pickSec").classList.add("hidden");
     $("setupSec").classList.add("hidden");
@@ -425,49 +421,6 @@
     if (v.readyState >= 1) seek(v, Math.min(v.duration * 0.3, 5));
     else v.onloadedmetadata = function () { seek(v, Math.min(v.duration * 0.3, 5)); };
   };
-
-  function exportText() {
-    return "GT-SUBS v1\n" + segments.map(function (s, i) { return (i + 1) + "|" + s.en.replace(/[\r\n|]+/g, " "); }).join("\n");
-  }
-  $("proBtn").onclick = function () {
-    var t = exportText();
-    $("proPanel").classList.remove("hidden");
-    $("proOut").value = t;
-    function manual() {
-      $("proOut").classList.remove("hidden");
-      $("proCopied").textContent = "ما قدرت أنسخ تلقائيًا: اضغط مطوّل على المربع اللي تحت، واختر Select All ثم Copy.";
-    }
-    try {
-      navigator.clipboard.writeText(t).then(function () {
-        $("proOut").classList.add("hidden");
-        $("proCopied").textContent = "✓ نسخت جمل الفيديو (" + segments.length + " جملة).";
-      }, manual);
-    } catch (e) { manual(); }
-  };
-  $("proPaste").onclick = function () {
-    try {
-      navigator.clipboard.readText().then(function (t) { $("proIn").value = t; applyPro(); },
-        function () { proStatus("ما قدرت أقرأ الحافظة، الصقها يدويًا في المربع.", true); });
-    } catch (e) { proStatus("ما قدرت أقرأ الحافظة، الصقها يدويًا في المربع.", true); }
-  };
-  $("proApply").onclick = applyPro;
-
-  function applyPro() {
-    var lines = String($("proIn").value || "").split(/\r?\n/), got = 0, map = {};
-    lines.forEach(function (l) {
-      var m = l.match(/^\s*(\d+)\s*\|\s*(.*?)\s*$/);
-      if (m && m[2]) map[parseInt(m[1], 10)] = m[2];
-    });
-    if (/GT-SUBS/.test($("proIn").value)) { proStatus("هذا النص الإنجليزي اللي نسخته من هنا. ترجمه أول في صفحة الترجمة الاحترافية، وبعدها الصق الترجمة.", true); return; }
-    segments.forEach(function (s, i) { if (map[i + 1]) { s.ar = map[i + 1]; got++; } });
-    if (!got) { proStatus("ما لقيت ترجمة في النص. تأكد إنك نسخت من زر \"انسخ الترجمة\".", true); return; }
-    engines = {}; engines[PRO_NAME] = 1;
-    putCache();
-    lastIdx = -2;
-    renderLines();
-    proStatus("✓ تمت! " + got + " من " + segments.length + " جملة صارت بالترجمة الاحترافية.", false);
-  }
-  function proStatus(msg, isErr) { $("proStatus").textContent = msg; $("proStatus").className = "status" + (isErr ? " err" : ""); }
 
   function fmt(t) { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ":" + ("0" + (t % 60)).slice(-2); }
 })();
