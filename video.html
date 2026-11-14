@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ترجمة فيديو - مترجم الألعاب</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1316">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<style>
+  :root{--bg:#0f1316;--card:#182027;--line:#26313a;--text:#f2f5f7;--muted:#8d9aa5;--accent:#3fbf8f;--accent2:#2a8f69;--err:#e0655a;--sub:22px}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"SF Arabic","Geeza Pro","Segoe UI",Tahoma,sans-serif}
+  body{padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 28px)}
+  .wrap{max-width:640px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+  header .t{display:flex;align-items:center;gap:10px}
+  header h1{font-size:22px;font-weight:800;margin:0}
+  header svg{width:26px;height:26px}
+  header a{color:var(--accent);font-size:15px;text-decoration:none;border:1px solid var(--line);padding:7px 12px;border-radius:12px;background:var(--card)}
+  .engine{color:var(--muted);font-size:13px;margin:0 0 14px;min-height:18px}
+  .engine.ok{color:var(--accent)}
+  button{font-family:inherit}
+  .big{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:18px;border:0;border-radius:18px;background:var(--accent);color:#06281b;font-size:19px;font-weight:800;cursor:pointer}
+  .big:active{background:var(--accent2)} .big:disabled{opacity:.5}
+  .ghost{padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px;cursor:pointer}
+  .ghost:disabled{opacity:.5}
+  .row{display:flex;gap:10px;margin-top:10px}
+  .row>*{flex:1}
+  input[type=file]{display:none}
+  .hint{color:var(--muted);font-size:15px;line-height:1.6;margin:12px 0 10px}
+  .stage{position:relative;border-radius:14px;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
+  .stage video{display:block;width:100%;pointer-events:none}
+  .sel{position:absolute;border:2px solid var(--accent);background:rgba(63,191,143,.12);box-shadow:0 0 0 9999px rgba(0,0,0,.45);pointer-events:none}
+  .scrub{width:100%;margin-top:10px;accent-color:var(--accent)}
+  .bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:12px}
+  .bar div{height:100%;width:0;background:var(--accent);transition:width .2s}
+  .status{color:var(--muted);font-size:15px;margin-top:8px;line-height:1.6}
+  .err{color:var(--err)}
+  .player{position:relative;border-radius:14px;overflow:hidden;background:#000}
+  .player video{display:block;width:100%;max-height:70vh;background:#000}
+  .subs{min-height:64px;padding:10px 6px;text-align:center;pointer-events:none;background:#0b0e10;display:flex;align-items:center;justify-content:center}
+  .player.big-mode{flex-direction:column}
+  .player.big-mode .subs{position:absolute;left:4%;right:4%;background:none;min-height:0}
+  .subs span{display:inline-block;background:rgba(0,0,0,.72);color:#fff;font-size:var(--sub);font-weight:700;line-height:1.55;padding:6px 14px;border-radius:10px;white-space:pre-wrap}
+  .subs span:empty{display:none}
+  .player.big-mode{position:fixed;inset:0;z-index:50;border-radius:0;display:flex;align-items:center;justify-content:center}
+  .player.big-mode video{max-height:100vh;height:100%;width:100%;object-fit:contain}
+  .player.big-mode .subs{bottom:max(70px, calc(env(safe-area-inset-bottom) + 60px))}
+  .exitbig{display:none;position:absolute;top:calc(env(safe-area-inset-top) + 12px);left:12px;z-index:2;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:12px;padding:10px 14px;font-size:15px}
+  .player.big-mode .exitbig{display:block}
+  .settings{display:flex;align-items:center;justify-content:space-between;margin-top:12px;color:var(--muted);font-size:15px}
+  .settings button{width:40px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:18px;font-weight:700}
+  h2{font-size:16px;color:var(--muted);font-weight:500;margin:22px 0 8px}
+  .line{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:8px;cursor:pointer;line-height:1.7}
+  .line.now{border-color:var(--accent)}
+  .line .tm{color:var(--accent);font-size:13px;direction:ltr;display:inline-block}
+  .line .en{direction:ltr;text-align:left;color:var(--muted);font-size:13px;margin-top:2px;font-family:-apple-system,system-ui,sans-serif}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="t">
+      <svg viewBox="0 0 24 24"><path d="M12 2 22 20H2Z" fill="#3fbf8f"/><path d="M12 11 17 20H7Z" fill="#0f1316"/></svg>
+      <h1>ترجمة فيديو</h1>
+    </div>
+    <a href="./">ترجمة صورة</a>
+  </header>
+  <p class="engine" id="engine">جاري تجهيز قارئ النص...</p>
+
+  <section id="pickSec">
+    <button class="big" id="pickBtn" type="button">اختر فيديو</button>
+    <p class="hint">صوّر المقطع بالجوال، أو سجّله من السويتش (اضغط زر Capture مطوّل) وانقله للجوال. الفيديو يبقى في جوالك وما ينرفع لأي مكان.</p>
+  </section>
+  <input id="fileInput" type="file" accept="video/*">
+
+  <section id="setupSec" class="hidden">
+    <p class="hint">حرّك الشريط لين تطلع جملة ترجمة، وبعدها ارسم بإصبعك مربع حول مكان الترجمة. المربع الأخضر هو المكان اللي بيقرأ منه.</p>
+    <div class="stage" id="stage"><video id="setupVideo" playsinline muted preload="auto"></video><div class="sel" id="sel"></div></div>
+    <input class="scrub" id="scrub" type="range" min="0" max="1000" value="0">
+    <div class="row">
+      <button class="big" id="startBtn" type="button" style="flex:2">ابدأ الترجمة</button>
+      <button class="ghost" id="otherBtn" type="button">فيديو ثاني</button>
+    </div>
+    <div id="progress" class="hidden">
+      <div class="bar"><div id="barFill"></div></div>
+      <div class="status" id="status"></div>
+      <button class="ghost" id="cancelBtn" type="button" style="width:100%;margin-top:8px">إلغاء</button>
+    </div>
+  </section>
+
+  <section id="playSec" class="hidden">
+    <div class="player" id="player">
+      <button class="exitbig" id="exitBig" type="button">✕ تصغير</button>
+      <video id="playVideo" playsinline controls preload="auto"></video>
+      <div class="subs"><span id="subText"></span></div>
+    </div>
+    <div class="row">
+      <button class="ghost" id="bigBtn" type="button">عرض كبير</button>
+      <button class="ghost" id="againBtn" type="button">فيديو ثاني</button>
+    </div>
+    <div class="settings">
+      <span>حجم الترجمة</span>
+      <span><button type="button" id="minus">−</button> <button type="button" id="plus">+</button></span>
+    </div>
+    <h2 id="linesTitle">كل الجمل</h2>
+    <div id="lines"></div>
+  </section>
+</div>
+<script src="tesseract.min.js"></script>
+<script src="video.js"></script>
+</body>
+</html>
