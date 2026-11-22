@@ -6,13 +6,15 @@
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
   function lsSet(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
 
-  var ENGINES = ["microsoft", "google", "claude", "gemini"];
-  var NAMES = { microsoft: "Microsoft", google: "Google", mymemory: "MyMemory", claude: "Claude", gemini: "Gemini" };
-  function getEngine() { var e = lsGet("gt_engine", "microsoft"); return ENGINES.indexOf(e) >= 0 ? e : "microsoft"; }
+  var ENGINES = ["freeai", "microsoft", "google", "claude", "gemini"];
+  var NAMES = { freeai: "الذكاء الاصطناعي", microsoft: "Microsoft", google: "Google", mymemory: "MyMemory", claude: "Claude", gemini: "Gemini" };
+  function getEngine() { var e = lsGet("gt_engine", "freeai"); return ENGINES.indexOf(e) >= 0 ? e : "freeai"; }
   function setEngine(v) { lsSet("gt_engine", v); }
   function getKey(engine) { return (lsGet("gt_key_" + engine, "") || "").trim(); }
-  function isLLM(engine) { return engine === "claude" || engine === "gemini"; }
-  function llmReady() { var e = getEngine(); return isLLM(e) && !!getKey(e); }
+  function isLLM(engine) { return engine === "claude" || engine === "gemini" || engine === "freeai"; }
+  function needsKey(engine) { return engine === "claude" || engine === "gemini"; }
+  function hasAccess(engine) { return isLLM(engine) && (!needsKey(engine) || !!getKey(engine)); }
+  function llmReady() { return hasAccess(getEngine()); }
 
   function timedFetch(u, opts, asText, ms) {
     opts = opts || {};
@@ -143,11 +145,36 @@
     });
   }
 
+  // ذكاء اصطناعي مجاني بدون مفتاح (Pollinations): نموذج لغوي كامل، فيفهم السياق مثل Claude وGemini
+  function askFreeAI(prompt) {
+    return timedFetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai",
+        messages: [
+          { role: "system", content: "You are a professional English to Arabic game translator. Reply with JSON only." },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" },
+        private: true
+      })
+    }, false, 60000).then(function (j) {
+      var c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      if (!c) throw new Error("empty");
+      return c;
+    }, function (e) {
+      // طريقة ثانية أبسط لنفس الخدمة
+      var u = "https://text.pollinations.ai/" + encodeURIComponent(prompt) + "?model=openai&json=true&private=true";
+      return timedFetch(u, { method: "GET" }, true, 60000).catch(function () { throw e; });
+    });
+  }
+
   function llmBatch(engine, lines) {
     var key = getKey(engine);
-    if (!key) return Promise.reject(new Error("no key"));
+    if (needsKey(engine) && !key) return Promise.reject(new Error("no key"));
     var prompt = PROMPT_HEAD + "\n" + lines.map(function (l, i) { return (i + 1) + "|" + String(l).replace(/[\r\n|]+/g, " "); }).join("\n");
-    var ask = engine === "claude" ? askClaude : askGemini;
+    var ask = engine === "claude" ? askClaude : engine === "gemini" ? askGemini : askFreeAI;
     return ask(prompt, key).then(function (text) {
       var data = parseJSON(text), out = new Array(lines.length);
       var arr = (data && Array.isArray(data.lines)) ? data.lines : (Array.isArray(data) ? data : []);
@@ -171,7 +198,7 @@
   // جملة وحدة -> {text, engine, engineName}
   function translate(en) {
     var engine = getEngine();
-    if (isLLM(engine) && getKey(engine)) {
+    if (hasAccess(engine)) {
       return llmBatch(engine, [en]).then(function (out) {
         if (!out[0]) throw new Error("empty");
         lastLLMError = null;
@@ -206,7 +233,7 @@
       }
       return next();
     }
-    if (!(isLLM(engine) && getKey(engine))) return oneByOne(engine === "google" ? "google" : "microsoft");
+    if (!hasAccess(engine)) return oneByOne(engine === "google" ? "google" : "microsoft");
     var size = 50, chunks = [], results = new Array(list.length);
     for (var s = 0; s < list.length; s += size) chunks.push(s);
     var c = 0;
@@ -263,7 +290,7 @@
     wrap.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:8px;width:100%";
     var sel = document.createElement("select");
     sel.style.cssText = "background:#182027;color:#f2f5f7;border:1px solid #26313a;border-radius:10px;padding:7px 10px;font:inherit;font-size:15px";
-    [["microsoft", "Microsoft (مجاني)"], ["google", "Google (مجاني)"], ["claude", "Claude (احترافي)"], ["gemini", "Gemini (قريب من Claude)"]].forEach(function (o) {
+    [["freeai", "ذكاء اصطناعي مجاني (الأقوى)"], ["microsoft", "Microsoft (عادي)"], ["google", "Google (عادي)"], ["claude", "Claude (بمفتاح)"], ["gemini", "Gemini (بمفتاح)"]].forEach(function (o) {
       var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op);
     });
     sel.value = getEngine();
@@ -283,7 +310,7 @@
 
     function refresh() {
       var e = sel.value;
-      if (!isLLM(e)) { keyBox.style.display = "none"; return; }
+      if (!needsKey(e)) { keyBox.style.display = "none"; return; }
       keyBox.style.display = "block";
       var h = KEY_HELP[e], has = !!getKey(e);
       inp.value = ""; inp.placeholder = has ? "✓ المفتاح محفوظ (اكتب مفتاح جديد لتغييره)" : (e === "claude" ? "الصق مفتاح Claude هنا (sk-ant-...)" : "الصق مفتاح Gemini هنا (AIza...)");

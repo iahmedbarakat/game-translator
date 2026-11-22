@@ -233,7 +233,7 @@
       var d = document.createElement("div"); d.className = "ar"; d.textContent = r.text;
       var src = document.createElement("div"); src.className = "src"; src.textContent = "ترجمة " + r.engineName;
       var wanted = GT.getEngine();
-      if ((wanted === "claude" || wanted === "gemini") && r.engine !== wanted) {
+      if ((wanted === "claude" || wanted === "gemini" || wanted === "freeai") && r.engine !== wanted) {
         src.textContent += " · ⚠︎ " + (GT.getLastError() || "حط المفتاح من خيار المترجم تحت.");
       }
       body.appendChild(d); body.appendChild(src);
