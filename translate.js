@@ -88,6 +88,13 @@
     "Mt. Lanayru = جبل لانايرو, Spring of Wisdom = نبع الحكمة, Spring of Power = نبع القوة, Spring of Courage = نبع الشجاعة, Spirit Orb = كرة روحية, Heart Container = حاوية القلب, Stamina Vessel = وعاء التحمّل,",
     "Hylian = هايلي, Gerudo = الجيرودو, Zora = الزورا, Goron = الغورون, Rito = الريتو, Rupee(s) = روبية / روبيات.",
     "Keep controller button names (A, B, X, Y, L, R, ZL, ZR, +, -) as they are.",
+    "A line may start with the speaker's name label or a few stray letters from the dialogue box (like 'Benja' or 'ja'): drop them, translate only the spoken sentence.",
+    "Translate idioms by meaning, never word by word, and never add words that are not in the English. Write the way an Arab player would naturally say it in clear Fusha.",
+    "Examples of the quality expected:",
+    "EN: You've finally awakened, Link. -> AR: استيقظتَ أخيرًا يا لينك.",
+    "EN: Hey! You there! Got a minute? -> AR: أنت! أجل، أنت! هل لديك دقيقة؟",
+    "EN: I'm not about to let some kid tell me what to do. -> AR: لن أسمح لفتى صغير بأن يملي عليّ ما أفعل.",
+    "EN: Sorry, but I've got nothing for you right now. -> AR: آسف، ليس لدي شيء لك الآن.",
     "Return exactly one Arabic line for every input number, with the same numbers. If a line is pure OCR garbage, return an empty string for it.",
     'Return JSON only, no other text: {"lines":[{"n":1,"ar":"..."}]}',
     "",
@@ -153,7 +160,7 @@
       body: JSON.stringify({
         model: "openai",
         messages: [
-          { role: "system", content: "You are a professional English to Arabic game translator. Reply with JSON only." },
+          { role: "system", content: "You are an expert English to Arabic game localizer. Accuracy first: never invent words that are not in the source. Natural, fluent Arabic. Reply with JSON only." },
           { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
