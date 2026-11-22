@@ -166,9 +166,10 @@
   function pct(hist, n, q) { var t = n * q, a = 0; for (var i = 0; i < 256; i++) { a += hist[i]; if (a >= t) return i; } return 255; }
 
   // ---------------------------------------------------- تنظيف النص
-  function clean(t) {
-    return String(t || "")
-      .replace(/^\s*[a-z]{1,3}\s+(?=[A-Z"'])/, "")   // بقايا اسم المتكلم مثل "ja It's..."
+  function clean(t, mid) {
+    t = String(t || "");
+    if (!mid) t = t.replace(/^\s*[a-z]{1,3}\s+(?=[A-Z"'])/, "");   // بقايا اسم المتكلم مثل "ja It's..." (بس في بداية الكلام)
+    return t
       .replace(/[|]/g, "I")
       .replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
       .replace(/[^\x20-\x7E\n]/g, " ")
@@ -180,7 +181,7 @@
     var lines = (data && data.lines) || [];
     var keep = [];
     for (var i = 0; i < lines.length; i++) {
-      var L = lines[i], txt = clean(L.text);
+      var L = lines[i], txt = clean(L.text, keep.length > 0);
       var letters = (txt.match(/[A-Za-z]/g) || []).length;
       if (letters < 2) continue;
       if (L.confidence < 45 && letters < 12) continue;      // غالبًا تشويش
@@ -188,7 +189,9 @@
       keep.push(txt);
     }
     if (!keep.length && data && data.text && data.confidence > 50) return clean(data.text);
-    return clean(keep.join(" "));
+    // أول سطر اسم المتكلم (مثل "Benja" فوق مربع الكلام)؟ نخليه "Benja: الكلام" عشان ينترجم لحاله
+    if (keep.length >= 2 && GT.looksLikeName(keep[0])) return keep[0] + ": " + clean(keep.slice(1).join(" "), true);
+    return clean(keep.join(" "), true);
   }
 
   // ---------------------------------------------------- القراءة + الترجمة
@@ -242,9 +245,12 @@
   function translateAndShow(en, fromRun) {
     if (!fromRun) setButtons(false);
     status("جاري الترجمة...");
-    return GT.translate(en).then(function (r) {
+    var sp = GT.splitSpeaker(en), who = "";
+    return Promise.all([GT.translate(sp.text), GT.translateName(sp.name)]).then(function (both) {
+      var r = both[0]; who = both[1];
       var body = $("resultBody");
       body.innerHTML = "";
+      if (who) { var w = document.createElement("div"); w.className = "who"; w.textContent = who; body.appendChild(w); }
       var d = document.createElement("div"); d.className = "ar"; d.textContent = r.text;
       var src = document.createElement("div"); src.className = "src"; src.textContent = "ترجمة " + r.engineName;
       var wanted = GT.getEngine();
@@ -253,7 +259,7 @@
       }
       body.appendChild(d); body.appendChild(src);
       $("enText").value = en;
-      GTStore.Library.add({ type: "photo", en: en, ar: r.text, engine: r.engineName, thumb: curThumb, sig: curSig || ("photo|" + Date.now()) });
+      GTStore.Library.add({ type: "photo", en: en, ar: r.text, who: who, engine: r.engineName, thumb: curThumb, sig: curSig || ("photo|" + Date.now()) });
     }).catch(function () {
       showError("قريت الكلام بس ما قدرت أترجمه. تأكد من الإنترنت واضغط \"ترجم النص بعد التصحيح\".");
       $("enBox").open = true;
@@ -282,7 +288,7 @@
       list.forEach(function (it) {
         var d = document.createElement("div"); d.className = "h";
         var a = document.createElement("div");
-        a.textContent = it.type === "video" ? "🎬 " + (it.title || "فيديو") + " · " + (it.lines || []).length + " جملة" : it.ar;
+        a.textContent = it.type === "video" ? "🎬 " + (it.title || "فيديو") + " · " + (it.lines || []).length + " جملة" : (it.who ? it.who + ": " : "") + it.ar;
         d.appendChild(a);
         if (it.type !== "video") { var e = document.createElement("div"); e.className = "en"; e.textContent = it.en; d.appendChild(e); }
         h.appendChild(d);

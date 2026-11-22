@@ -239,6 +239,7 @@
       if (letters / Math.max(1, txt.replace(/\s/g, "").length) < 0.55) continue;
       keep.push(txt);
     }
+    if (keep.length >= 2 && GT.looksLikeName(keep[0])) return keep[0] + ": " + clean(keep.slice(1).join(" "));
     return clean(keep.join(" "));
   }
   function norm(t) { return String(t).toLowerCase().replace(/[^a-z]/g, ""); }
@@ -351,18 +352,29 @@
   function translateAll(segs) {
     engines = {};
     // نفس الجملة مرتين ما نترجمها مرتين
-    var uniq = [], idx = {};
-    segs.forEach(function (s) { var k = s.en.toLowerCase(); if (!(k in idx)) { idx[k] = uniq.length; uniq.push(s.en); } });
+    // اسم المتكلم ينترجم لحاله، والكلام لحاله
+    var uniq = [], idx = {}, names = [], nidx = {};
+    segs.forEach(function (s) {
+      var sp = GT.splitSpeaker(s.en); s._t = sp.text; s._n = sp.name;
+      var k = sp.text.toLowerCase(); if (!(k in idx)) { idx[k] = uniq.length; uniq.push(sp.text); }
+      if (sp.name && !(sp.name in nidx)) { nidx[sp.name] = names.length; names.push(sp.name); }
+    });
+    var whoAr = {};
+    var namesDone = names.reduce(function (p, n) {
+      return p.then(function () { return GT.translateName(n).then(function (ar) { whoAr[n] = ar; }); });
+    }, Promise.resolve());
     setStatus(GT.llmReady() ? "جاري الترجمة الاحترافية للمقطع كامل..." : "جاري الترجمة...");
     return GT.translateBatch(uniq, function (done, total) {
       if (cancelled) return;
       if (!GT.llmReady()) setStatus("جاري الترجمة... " + done + " من " + total);
       setBar(0.8 + 0.2 * done / total);
-    }).then(function (res) {
+    }).then(function (res) { return namesDone.then(function () { return res; }); }).then(function (res) {
       if (cancelled) throw new Error("cancel");
       var failed = 0;
       segs.forEach(function (s) {
-        var r = res[idx[s.en.toLowerCase()]];
+        s.who = s._n ? (whoAr[s._n] || s._n) : "";
+        var r = res[idx[s._t.toLowerCase()]];
+        delete s._t; delete s._n;
         if (r) { s.ar = r.text; engines[r.engineName] = 1; } else { failed++; s.ar = "⚠︎ " + s.en; }
       });
       if (failed === segs.length) throw new Error("translate");
@@ -377,7 +389,7 @@
       return GTStore.Library.add({
         type: "video", title: fileName || "فيديو", sig: "video|" + fileSig, thumb: thumb,
         engine: Object.keys(engines).join(" و "),
-        lines: segments.map(function (s) { return { start: s.start, end: s.end, en: s.en, ar: s.ar }; })
+        lines: segments.map(function (s) { return { start: s.start, end: s.end, en: s.en, ar: s.ar, who: s.who || "" }; })
       });
     }).catch(function () {});
   }
@@ -405,7 +417,9 @@
       var tm = document.createElement("span"); tm.className = "tm"; tm.textContent = fmt(s.start);
       var ar = document.createElement("div"); ar.textContent = s.ar;
       var en = document.createElement("div"); en.className = "en"; en.textContent = s.en;
-      d.appendChild(tm); d.appendChild(ar); d.appendChild(en);
+      d.appendChild(tm);
+      if (s.who) { var w = document.createElement("div"); w.className = "who"; w.textContent = s.who; d.appendChild(w); }
+      d.appendChild(ar); d.appendChild(en);
       d.onclick = function () { var pv = $("playVideo"); pv.currentTime = s.start + 0.05; pv.play().catch(function () {}); };
       box.appendChild(d);
     });
@@ -415,7 +429,11 @@
     var pv = $("playVideo"), t = pv.currentTime, idx = -1;
     for (var i = 0; i < segments.length; i++) if (t >= segments[i].start && t < segments[i].end) { idx = i; break; }
     if (idx !== lastIdx) {
-      $("subText").textContent = idx >= 0 ? segments[idx].ar : "";
+      var st = $("subText"); st.textContent = "";
+      if (idx >= 0) {
+        if (segments[idx].who) { var w = document.createElement("b"); w.className = "who"; w.textContent = segments[idx].who; st.appendChild(w); }
+        st.appendChild(document.createTextNode(segments[idx].ar));
+      }
       var old = document.querySelector(".line.now"); if (old) old.classList.remove("now");
       if (idx >= 0 && $("ln" + idx)) $("ln" + idx).classList.add("now");
       lastIdx = idx;

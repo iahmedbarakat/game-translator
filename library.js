@@ -43,8 +43,8 @@
   $("game").onchange = function () { game = this.value; render(); };
 
   function textOf(it) {
-    if (it.type === "video") return (it.title || "") + " " + (it.lines || []).map(function (l) { return l.en + " " + l.ar; }).join(" ");
-    return (it.en || "") + " " + (it.ar || "");
+    if (it.type === "video") return (it.title || "") + " " + (it.lines || []).map(function (l) { return l.en + " " + (l.who || "") + " " + l.ar; }).join(" ");
+    return (it.en || "") + " " + (it.who || "") + " " + (it.ar || "");
   }
 
   function render() {
@@ -87,6 +87,7 @@
       tx.appendChild(el("div", "en", "")).style.direction = "rtl";
       tx.lastChild.style.textAlign = "right"; tx.lastChild.textContent = first;
     } else {
+      if (it.who) tx.appendChild(el("div", "who", it.who));
       tx.appendChild(el("div", "ar", it.ar || ""));
       tx.appendChild(el("div", "en", it.en || ""));
     }
@@ -102,6 +103,7 @@
       (it.lines || []).forEach(function (l) {
         var d = el("div", "l");
         d.appendChild(el("span", "t", fmtT(l.start)));
+        if (l.who) d.appendChild(el("div", "who", l.who));
         d.appendChild(el("div", "", l.ar));
         var en = el("div", "en", l.en); en.style.cssText = "direction:ltr;text-align:left;color:#8d9aa5;font-size:12.5px";
         d.appendChild(en);
@@ -121,7 +123,7 @@
     }
     var cp = el("button", "", "نسخ"); cp.type = "button";
     cp.onclick = function () {
-      copy(it.type === "video" ? (it.lines || []).map(function (l) { return fmtT(l.start) + "  " + l.ar; }).join("\n") : it.ar);
+      copy(it.type === "video" ? (it.lines || []).map(function (l) { return fmtT(l.start) + "  " + (l.who ? l.who + ": " : "") + l.ar; }).join("\n") : (it.who ? it.who + ":\n" : "") + it.ar);
     };
     acts.appendChild(cp);
     var del = el("button", "del", "حذف"); del.type = "button";

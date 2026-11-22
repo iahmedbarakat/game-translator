@@ -174,6 +174,59 @@
     return ar;
   }
 
+
+  // ------------------------------------------------ اسم المتكلم
+  // "Benja: It's..." -> {name:"Benja", text:"It's..."}
+  var NOT_NAMES = /^(note|tip|hint|warning|quest|objective|location|reward|new|main quest|side quest|shrine quest|memory|chapter|q|a|ok|yes|no)$/i;
+  var NAME_RE = /^([A-Z][A-Za-z'.\-]{1,15}(?: (?:[A-Z][A-Za-z'.\-]{1,15}|of|the)){0,3})\s*:\s+(\S[\s\S]*)$/;
+  var INTERJ = /^(hey|hi|hello|oh|ah|aah|uh|um|hmm|huh|wow|what|yes|no|okay|ok|well|so|wait|look|listen|please|thanks|thank you|sorry|ha|haha|whoa|ugh|eh|hm|right|sure|indeed|yeah|yep|nope|alas|behold)$/i;
+  function splitSpeaker(en) {
+    en = String(en || "").trim();
+    var m = en.match(NAME_RE);
+    if (!m || m[1].length > 26 || NOT_NAMES.test(m[1]) || INTERJ.test(m[1]) || !/[A-Za-z]{2}/.test(m[2])) return { name: "", text: en };
+    return { name: m[1], text: m[2].trim() };
+  }
+  // سطر لحاله شكله اسم (مثل اللي يطلع فوق مربع الكلام)
+  function looksLikeName(line) {
+    line = String(line || "").trim();
+    return line.length >= 2 && line.length <= 26 &&
+      /^[A-Z][A-Za-z'.\-]+(?: (?:[A-Z][A-Za-z'.\-]+|of|the)){0,3}$/.test(line) &&
+      !INTERJ.test(line) && !NOT_NAMES.test(line);
+  }
+  var NAMES_AR = {
+    "link": "لينك", "zelda": "زيلدا", "princess zelda": "الأميرة زيلدا", "ganon": "غانون", "calamity ganon": "الكارثة غانون",
+    "mipha": "ميفا", "daruk": "داروك", "revali": "ريفالي", "urbosa": "أوربوسا", "king rhoam": "الملك روم", "rhoam": "روم",
+    "impa": "إمبا", "purah": "بورا", "robbie": "روبي", "kass": "كاس", "hestu": "هيستو", "paya": "بايا", "sidon": "سيدون",
+    "riju": "ريجو", "teba": "تيبا", "yunobo": "يونوبو", "beedle": "بيدل", "old man": "الرجل العجوز", "the old man": "الرجل العجوز",
+    "great deku tree": "شجرة ديكو العظيمة", "the great deku tree": "شجرة ديكو العظيمة", "deku tree": "شجرة ديكو", "bolson": "بولسون", "hudson": "هدسون", "cado": "كادو",
+    "dorephan": "دوريفان", "muzu": "موزو", "bludo": "بلودو", "buliara": "بولياره", "kohga": "كوغا", "monk": "الراهب",
+    "goddess hylia": "الإلهة هيليا", "voice": "صوت", "mysterious voice": "صوت غامض", "guard": "الحارس", "soldier": "الجندي",
+    "merchant": "التاجر", "traveler": "المسافر", "stable hand": "عامل الإسطبل", "chef": "الطاهي", "shopkeeper": "صاحب المحل"
+  };
+  var nameCache = {};
+  try { nameCache = JSON.parse(localStorage.getItem("gt_names") || "{}") || {}; } catch (e) {}
+  // ترجمة اسم المتكلم: من القاموس، وإذا مو موجود نترجمه/نكتبه بالعربي ونحفظه
+  function translateName(name) {
+    var k = String(name || "").trim().toLowerCase();
+    if (!k) return Promise.resolve("");
+    if (NAMES_AR[k]) return Promise.resolve(NAMES_AR[k]);
+    if (nameCache[k]) return Promise.resolve(nameCache[k]);
+    var engine = getEngine();
+    var p = hasAccess(engine)
+      ? (engine === "claude" ? askClaude : askGemini)(
+          "This is the name of a character speaking in a video game (The Legend of Zelda: Breath of the Wild or another game): \"" + name + "\".\n" +
+          "Write it in Arabic the way an Arabic game localisation would: transliterate proper names by sound, translate titles and descriptions (like Old Man or Guard).\n" +
+          "Return the Arabic name only, nothing else.", getKey(engine)).then(function (t) { return String(t || "").split("\n")[0]; })
+      : freeTranslate(name, engine === "google" ? "google" : "microsoft").then(function (r) { return r.text; });
+    return p.then(function (ar) {
+      ar = String(ar || "").replace(/["'«»:.،]/g, "").trim();
+      if (!ar || /[A-Za-z]/.test(ar) || ar.split(/\s+/).length > 4) return name;
+      nameCache[k] = ar;
+      try { localStorage.setItem("gt_names", JSON.stringify(nameCache)); } catch (e) {}
+      return ar;
+    }, function () { return name; });
+  }
+
   // ------------------------------------------------ الواجهة العامة
   var lastLLMError = null;
 
@@ -310,5 +363,5 @@
     refresh();
   }
 
-  window.GT = { translate: translate, translateBatch: translateBatch, mountPicker: mountPicker, getEngine: getEngine, llmReady: llmReady, getLastError: getLastError };
+  window.GT = { splitSpeaker: splitSpeaker, looksLikeName: looksLikeName, translateName: translateName, translate: translate, translateBatch: translateBatch, mountPicker: mountPicker, getEngine: getEngine, llmReady: llmReady, getLastError: getLastError };
 })();
