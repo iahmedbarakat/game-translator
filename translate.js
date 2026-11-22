@@ -236,11 +236,19 @@
   function describeError(e) {
     if (!e) return "";
     if (e.message === "no key") return "ما حطيت المفتاح.";
-    if (e.status === 401 || e.status === 403 || (e.status === 400 && /api.?key|invalid/i.test(e.body || ""))) return "المفتاح غلط أو منتهي.";
-    if (e.status === 429) return "وصلت الحد المسموح، انتظر شوي.";
-    if (e.status === 402 || /credit|billing|balance/i.test(e.body || "")) return "ما فيه رصيد في الحساب.";
+    var body = String(e.body || ""), msg = "";
+    try { var j = JSON.parse(body); msg = (j.error && (j.error.message || j.error.status)) || ""; } catch (x) {}
+    var t = (msg || body).toLowerCase();
+    var tail = msg ? " — " + msg.slice(0, 140) : "";
+    if (e.status === 402 || /credit|billing|balance|quota|payment/.test(t)) return "ما فيه رصيد في الحساب، اشحن من صفحة Billing." + tail;
+    if (e.status === 401 || /api.?key|x-api-key|authentication|permission/.test(t)) return "المفتاح غلط أو منتهي." + tail;
+    if (e.status === 403) return "المفتاح ما عنده صلاحية." + tail;
+    if (e.status === 429) return "وصلت الحد المسموح، انتظر شوي." + tail;
+    if (e.status === 529 || e.status === 503) return "الخدمة مزدحمة الحين، جرّب بعد شوي.";
     if (e.name === "AbortError") return "الرد تأخر.";
-    return "ما ضبط الاتصال" + (e.status ? " (" + e.status + ")" : "") + ".";
+    if (e.message === "bad json" || e.message === "empty") return "الرد وصل بس ما انقرى، جرّب مرة ثانية.";
+    if (!e.status) return "ما قدر يتصل بالخدمة (ممكن الإنترنت أو المتصفح منعها).";
+    return "ما ضبط الاتصال (" + e.status + ")" + tail;
   }
   function getLastError() { return lastLLMError ? describeError(lastLLMError) : ""; }
 
