@@ -9,7 +9,7 @@
   var fileUrl = null, sel = null, cancelled = false, running = false;
   var segments = [];              // [{start,end,en,ar}]
   var subSize = 22;
-  var engines = {};
+  var engines = {}, llmNote = "";
   var fileSig = "";
 
   // نحفظ الترجمة لكل فيديو، عشان لو رجعت له ما تحتاج تعيد القراءة
@@ -346,21 +346,24 @@
 
   // ---------------------------------------------------- الترجمة
   function translateAll(segs) {
-    var i = 0, failed = 0, cache = {};
     engines = {};
-    function next() {
-      if (cancelled) return Promise.reject(new Error("cancel"));
-      if (i >= segs.length) return Promise.resolve();
-      var s = segs[i++];
-      setStatus("جاري الترجمة... " + i + " من " + segs.length);
-      setBar(0.8 + 0.2 * i / segs.length);
-      var key = s.en.toLowerCase();
-      var p = cache[key] ? Promise.resolve(cache[key]) : GT.translate(s.en);
-      return p.then(function (r) { cache[key] = r; s.ar = r.text; engines[r.engineName] = 1; }, function () { failed++; s.ar = "⚠︎ " + s.en; })
-        .then(next);
-    }
-    return next().then(function () {
+    // نفس الجملة مرتين ما نترجمها مرتين
+    var uniq = [], idx = {};
+    segs.forEach(function (s) { var k = s.en.toLowerCase(); if (!(k in idx)) { idx[k] = uniq.length; uniq.push(s.en); } });
+    setStatus(GT.llmReady() ? "جاري الترجمة الاحترافية للمقطع كامل..." : "جاري الترجمة...");
+    return GT.translateBatch(uniq, function (done, total) {
+      if (cancelled) return;
+      if (!GT.llmReady()) setStatus("جاري الترجمة... " + done + " من " + total);
+      setBar(0.8 + 0.2 * done / total);
+    }).then(function (res) {
+      if (cancelled) throw new Error("cancel");
+      var failed = 0;
+      segs.forEach(function (s) {
+        var r = res[idx[s.en.toLowerCase()]];
+        if (r) { s.ar = r.text; engines[r.engineName] = 1; } else { failed++; s.ar = "⚠︎ " + s.en; }
+      });
       if (failed === segs.length) throw new Error("translate");
+      llmNote = GT.llmReady() && GT.getLastError() ? GT.getLastError() : "";
     });
   }
   // ---------------------------------------------------- المشغّل
@@ -380,7 +383,7 @@
   function renderLines() {
     var box = $("lines"); box.innerHTML = "";
     var used = Object.keys(engines);
-    $("linesTitle").textContent = "كل الجمل (" + segments.length + ")" + (used.length ? " · ترجمة " + used.join(" و ") : "");
+    $("linesTitle").textContent = "كل الجمل (" + segments.length + ")" + (used.length ? " · ترجمة " + used.join(" و ") : "") + (llmNote ? " · ⚠︎ " + llmNote : "");
     segments.forEach(function (s, i) {
       var d = document.createElement("div"); d.className = "line"; d.id = "ln" + i;
       var tm = document.createElement("span"); tm.className = "tm"; tm.textContent = fmt(s.start);

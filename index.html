@@ -52,6 +52,9 @@
   h2 button{background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline}
   .h{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;line-height:1.7}
   .h .en{direction:ltr;text-align:left;color:var(--muted);font-size:13px;margin-top:4px;font-family:-apple-system,system-ui,sans-serif}
+  .enginebox{margin-top:14px;display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+  .enginelabel{color:var(--muted);font-size:15px;padding-top:8px;flex:none}
+  .enginebox #enginePick{flex:1}
   .hidden{display:none !important}
 </style>
 </head>
@@ -90,9 +93,9 @@
     </details>
   </section>
 
-  <div class="settings">
-    <span>المترجم</span>
-    <span data-engine-picker id="enginePick"></span>
+  <div class="enginebox">
+    <div class="enginelabel">المترجم</div>
+    <div id="enginePick"></div>
   </div>
   <div class="settings">
     <span>حجم خط الترجمة</span>

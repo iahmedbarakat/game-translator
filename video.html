@@ -64,6 +64,9 @@
   .linkbtn{text-align:center;text-decoration:none}
   .note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:10px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
   .note button{background:none;border:0;color:var(--accent);font-size:14px;text-decoration:underline;flex:none}
+  .enginebox{margin-top:14px;display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+  .enginelabel{color:var(--muted);font-size:15px;padding-top:8px;flex:none}
+  .enginebox #enginePick{flex:1}
   .hidden{display:none !important}
 </style>
 </head>
@@ -88,9 +91,9 @@
     <p class="hint">حرّك الشريط لين تطلع جملة ترجمة، وبعدها ارسم بإصبعك مربع حول مكان الترجمة. المربع الأخضر هو المكان اللي بيقرأ منه.</p>
     <div class="stage" id="stage"><video id="setupVideo" playsinline muted preload="auto"></video><div class="sel" id="sel"></div></div>
     <input class="scrub" id="scrub" type="range" min="0" max="1000" value="0">
-    <div class="settings" style="margin-bottom:4px">
-      <span>المترجم</span>
-      <span id="enginePick"></span>
+    <div class="enginebox">
+      <div class="enginelabel">المترجم</div>
+      <div id="enginePick"></div>
     </div>
     <div class="row">
       <button class="big" id="startBtn" type="button" style="flex:2">ابدأ الترجمة</button>
