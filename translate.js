@@ -246,7 +246,7 @@
 
   // ------------------------------------------------ اختيار المترجم + المفتاح
   var KEY_HELP = {
-    claude: { url: "https://console.anthropic.com/settings/keys", label: "طلّع مفتاح Claude", note: "Claude API مدفوع (رصيد بسيط يكفي شهور للترجمة)." },
+    claude: { url: "https://platform.claude.com/settings/keys", label: "طلّع مفتاح Claude", note: "Claude API مدفوع (رصيد بسيط يكفي شهور للترجمة)." },
     gemini: { url: "https://aistudio.google.com/apikey", label: "طلّع مفتاح Gemini مجاني", note: "مجاني بحساب Google، بس له حد يومي." }
   };
   function mountPicker(el) {
