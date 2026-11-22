@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مكتبتي - مترجم الألعاب</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مترجم الألعاب">
+<meta name="theme-color" content="#0f1316">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{--bg:#0f1316;--card:#182027;--line:#26313a;--text:#f2f5f7;--muted:#8d9aa5;--accent:#3fbf8f;--accent2:#2a8f69;--err:#e0655a;--gold:#f0c34e}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"SF Arabic","Geeza Pro","Segoe UI",Tahoma,sans-serif}
+  body{padding:calc(env(safe-area-inset-top) + 16px) 16px 28px}
+  .wrap{max-width:640px;margin:0 auto}
+  header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  header h1{font-size:22px;font-weight:800;margin:0}
+  header svg{width:26px;height:26px}
+  button{font-family:inherit}
+  .hidden{display:none !important}
+  .search{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:16px}
+  .chips{display:flex;gap:8px;margin:12px 0;overflow-x:auto;padding-bottom:2px}
+  .chip{flex:none;padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:14px}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#06281b;font-weight:700}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;margin-bottom:10px}
+  select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:inherit;font-size:14px;max-width:60%}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+  .item .top{display:flex;gap:12px;padding:12px}
+  .item img{width:92px;height:60px;object-fit:cover;border-radius:10px;flex:none;background:#000}
+  .item .txt{flex:1;min-width:0}
+  .item .ar{font-size:17px;font-weight:700;line-height:1.6;word-wrap:break-word}
+  .item .en{direction:ltr;text-align:left;color:var(--muted);font-size:13px;margin-top:4px;font-family:-apple-system,system-ui,sans-serif;word-wrap:break-word}
+  .item .meta{color:var(--muted);font-size:12px;margin-top:6px}
+  .item .kind{display:inline-block;background:#0f1316;border:1px solid var(--line);border-radius:8px;padding:1px 7px;margin-inline-end:6px}
+  .acts{display:flex;border-top:1px solid var(--line)}
+  .acts button{flex:1;padding:10px 4px;background:none;border:0;color:var(--muted);font-size:14px;border-inline-start:1px solid var(--line)}
+  .acts button:first-child{border-inline-start:0}
+  .acts button.fav{color:var(--gold)}
+  .acts button.del{color:var(--err)}
+  .lines{border-top:1px solid var(--line);padding:6px 12px 10px}
+  .lines .l{padding:8px 0;border-bottom:1px solid #1f2830}
+  .lines .l:last-child{border-bottom:0}
+  .lines .t{color:var(--accent);font-size:12px;direction:ltr;display:inline-block}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px;line-height:1.8}
+  .empty a{color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+  .card h3{margin:0 0 10px;font-size:16px}
+  .prof{display:flex;align-items:center;gap:14px}
+  .prof .av{width:58px;height:58px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;flex:none}
+  .prof .nm{font-size:20px;font-weight:800}
+  .prof .since{color:var(--muted);font-size:13px;margin-top:2px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+  .stats div{background:#0f1316;border-radius:12px;padding:10px 4px;text-align:center}
+  .stats b{display:block;font-size:20px}
+  .stats span{color:var(--muted);font-size:12px}
+  .row{display:flex;gap:8px;margin-top:8px}
+  .row>*{flex:1}
+  input.txt{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0f1316;color:var(--text);font:inherit;font-size:16px}
+  .btn{padding:12px;border-radius:12px;border:1px solid var(--line);background:#0f1316;color:var(--text);font-size:15px;text-align:center;text-decoration:none;display:block}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#06281b;font-weight:700}
+  .btn.danger{color:var(--err)}
+  .hint{color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 0}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 100px);background:#2a8f69;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  input[type=file]{display:none}
+</style>
+</head>
+<body data-page="library">
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 24 24"><path d="M12 2 22 20H2Z" fill="#3fbf8f"/><path d="M12 11 17 20H7Z" fill="#0f1316"/></svg>
+    <h1 id="title">مكتبتي</h1>
+  </header>
+
+  <section id="libView">
+    <input class="search" id="q" type="search" placeholder="ابحث في ترجماتك (عربي أو إنجليزي)...">
+    <div class="chips" id="chips">
+      <button class="chip on" data-f="all" type="button">الكل</button>
+      <button class="chip" data-f="photo" type="button">صور</button>
+      <button class="chip" data-f="video" type="button">فيديو</button>
+      <button class="chip" data-f="fav" type="button">★ المفضلة</button>
+    </div>
+    <div class="bar"><span id="count"></span><select id="game"></select></div>
+    <div id="list"></div>
+  </section>
+
+  <section id="accView" class="hidden">
+    <div class="card">
+      <div class="prof"><div class="av" id="av"></div><div><div class="nm" id="nm"></div><div class="since" id="since"></div></div></div>
+      <div class="stats">
+        <div><b id="sAll">0</b><span>ترجمة</span></div>
+        <div><b id="sPhoto">0</b><span>صورة</span></div>
+        <div><b id="sVideo">0</b><span>فيديو</span></div>
+        <div><b id="sFav">0</b><span>مفضلة</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>اسمك</h3>
+      <div class="row"><input class="txt" id="nameIn" maxlength="40"><button class="btn primary" id="nameSave" type="button" style="flex:none;padding:12px 18px">حفظ</button></div>
+    </div>
+
+    <div class="card">
+      <h3>اللعبة اللي تلعبها الحين</h3>
+      <div class="row"><input class="txt" id="gameIn" list="games" maxlength="60"><button class="btn primary" id="gameSave" type="button" style="flex:none;padding:12px 18px">حفظ</button></div>
+      <datalist id="games">
+        <option value="Zelda: Breath of the Wild"><option value="Zelda: Tears of the Kingdom"><option value="Pokémon"><option value="Xenoblade Chronicles"><option value="Fire Emblem"><option value="Persona"><option value="Final Fantasy">
+      </datalist>
+      <p class="hint">كل ترجمة جديدة تنحفظ تحت هالاسم، وتقدر تفلتر فيه في المكتبة.</p>
+    </div>
+
+    <div class="card">
+      <h3>المترجم</h3>
+      <div id="enginePick"></div>
+    </div>
+
+    <div class="card">
+      <h3>نسخة احتياطية</h3>
+      <div class="row">
+        <button class="btn" id="exportBtn" type="button">⬇︎ حفظ نسخة من مكتبتي</button>
+        <button class="btn" id="importBtn" type="button">⬆︎ استرجاع نسخة</button>
+      </div>
+      <input id="importFile" type="file" accept="application/json,.json">
+      <p class="hint">هالنسخة التجريبية تحفظ ترجماتك في هالجهاز بس. خذ نسخة احتياطية عشان ما تضيع، أو عشان تنقلها لجهاز ثاني.</p>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button class="btn" id="switchBtn" type="button">تبديل الحساب</button>
+        <button class="btn danger" id="deleteBtn" type="button">حذف الحساب</button>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="store.js?v=1795307742"></script>
+<script src="shell.js?v=1795307742"></script>
+<script src="translate.js?v=1795307742"></script>
+<script src="library.js?v=1795307742"></script>
+</body>
+</html>

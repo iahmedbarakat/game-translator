@@ -9,16 +9,28 @@
   var sel = null;            // {x,y,w,h} نسب من 0 لـ 1
   var lastSel = null;
   var fontSize = 24;
-  var history = [];
+  var curThumb = "", curSig = "";
 
   // ---------------------------------------------------- تخزين بسيط
   function load(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   fontSize = load("gt_font", 24);
   lastSel = load("gt_sel", null);
-  history = load("gt_hist", []);
   applyFont();
-  renderHistory();
+  // الترجمات القديمة (قبل الحسابات) تنتقل للمكتبة مرة وحدة
+  function migrateOld() {
+    var old = load("gt_hist", null);
+    if (!old || !old.length || !GTStore.Profiles.current()) return;
+    var chain = Promise.resolve();
+    old.slice().reverse().forEach(function (h) {
+      chain = chain.then(function () { return GTStore.Library.add({ type: "photo", en: h.en, ar: h.ar, engine: "" }); });
+    });
+    chain.then(function () { try { localStorage.removeItem("gt_hist"); } catch (e) {} });
+  }
+  migrateOld();
+  document.addEventListener("gt-login", function () { migrateOld(); renderRecent(); });
+  GTStore.Library.onChange(renderRecent);
+  renderRecent();
 
   // ---------------------------------------------------- قارئ النص
   function initOCR() {
@@ -56,7 +68,6 @@
   };
   $("minus").onclick = function () { fontSize = Math.max(16, fontSize - 2); applyFont(); };
   $("plus").onclick = function () { fontSize = Math.min(44, fontSize + 2); applyFont(); };
-  $("clearHist").onclick = function () { history = []; save("gt_hist", history); renderHistory(); };
 
   function applyFont() {
     document.documentElement.style.setProperty("--ar", fontSize + "px");
@@ -185,6 +196,9 @@
     if (busy || !photo) return;
     busy = true; setButtons(false);
     if (r) { lastSel = r; save("gt_sel", r); }
+    var W = photo.naturalWidth, H = photo.naturalHeight;
+    curThumb = GTStore.thumbFrom(photo, W, H, r ? { x: r.x * W, y: r.y * H, w: r.w * W, h: r.h * H } : null);
+    curSig = "photo|" + Date.now();
     $("resultSec").classList.remove("hidden");
     $("enBox").open = false;
     status("جاري قراءة الكلام...");
@@ -239,7 +253,7 @@
       }
       body.appendChild(d); body.appendChild(src);
       $("enText").value = en;
-      addHistory(en, r.text);
+      GTStore.Library.add({ type: "photo", en: en, ar: r.text, engine: r.engineName, thumb: curThumb, sig: curSig || ("photo|" + Date.now()) });
     }).catch(function () {
       showError("قريت الكلام بس ما قدرت أترجمه. تأكد من الإنترنت واضغط \"ترجم النص بعد التصحيح\".");
       $("enBox").open = true;
@@ -259,21 +273,20 @@
   function setButtons(on) {
     ["shootBtn", "pickBtn", "goBtn", "fullBtn", "retranslate"].forEach(function (id) { $(id).disabled = !on; });
   }
-  function addHistory(en, ar) {
-    if (history.length && history[0].en === en) { history[0].ar = ar; }
-    else history.unshift({ en: en, ar: ar });
-    history = history.slice(0, 30);
-    save("gt_hist", history);
-    renderHistory();
-  }
-  function renderHistory() {
-    var h = $("hist"); h.innerHTML = "";
-    $("histTitle").classList.toggle("hidden", history.length === 0);
-    history.forEach(function (it) {
-      var d = document.createElement("div"); d.className = "h";
-      var a = document.createElement("div"); a.textContent = it.ar;
-      var e = document.createElement("div"); e.className = "en"; e.textContent = it.en;
-      d.appendChild(a); d.appendChild(e); h.appendChild(d);
+  // آخر الترجمات (من المكتبة)
+  function renderRecent() {
+    GTStore.Library.all().then(function (list) {
+      var h = $("hist"); h.innerHTML = "";
+      list = list.slice(0, 5);
+      $("histTitle").classList.toggle("hidden", list.length === 0);
+      list.forEach(function (it) {
+        var d = document.createElement("div"); d.className = "h";
+        var a = document.createElement("div");
+        a.textContent = it.type === "video" ? "🎬 " + (it.title || "فيديو") + " · " + (it.lines || []).length + " جملة" : it.ar;
+        d.appendChild(a);
+        if (it.type !== "video") { var e = document.createElement("div"); e.className = "en"; e.textContent = it.en; d.appendChild(e); }
+        h.appendChild(d);
+      });
     });
   }
 })();

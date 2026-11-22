@@ -58,12 +58,11 @@
   .hidden{display:none !important}
 </style>
 </head>
-<body>
+<body data-page="photo">
 <div class="wrap">
   <header>
     <svg viewBox="0 0 24 24"><path d="M12 2 22 20H2Z" fill="#3fbf8f"/><path d="M12 11 17 20H7Z" fill="#0f1316"/></svg>
     <h1>مترجم الألعاب</h1>
-    <a href="video.html" style="margin-inline-start:auto;color:#3fbf8f;font-size:15px;text-decoration:none;border:1px solid #26313a;padding:7px 12px;border-radius:12px;background:#182027">ترجمة فيديو</a>
   </header>
   <p class="engine" id="engine">جاري تجهيز قارئ النص...</p>
 
@@ -102,11 +101,13 @@
     <span><button type="button" id="minus">−</button> <button type="button" id="plus">+</button></span>
   </div>
 
-  <h2 id="histTitle" class="hidden">الترجمات السابقة <button type="button" id="clearHist">مسح</button></h2>
+  <h2 id="histTitle" class="hidden">آخر الترجمات <a href="library.html" style="color:var(--accent);font-size:14px;text-decoration:none">كل المكتبة ←</a></h2>
   <div id="hist"></div>
 </div>
 <script src="tesseract.min.js"></script>
-<script src="translate.js?v=1795307336"></script>
-<script src="app.js?v=1795307336"></script>
+<script src="store.js?v=1795307742"></script>
+<script src="shell.js?v=1795307742"></script>
+<script src="translate.js?v=1795307742"></script>
+<script src="app.js?v=1795307742"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@
   var segments = [];              // [{start,end,en,ar}]
   var subSize = 22;
   var engines = {}, llmNote = "";
-  var fileSig = "";
+  var fileSig = "", fileName = "";
 
   // نحفظ الترجمة لكل فيديو، عشان لو رجعت له ما تحتاج تعيد القراءة
   function getCache(sig) { var all = load("gt_vcache", {}); return all[sig] || null; }
@@ -64,6 +64,7 @@
     if (fileUrl) URL.revokeObjectURL(fileUrl);
     fileUrl = URL.createObjectURL(f);
     fileSig = f.name + "|" + f.size;
+    fileName = f.name.replace(/\.[a-z0-9]+$/i, "");
     var v = $("setupVideo");
     v.src = fileUrl;
     v.muted = true;
@@ -307,6 +308,8 @@
       return translateAll(segments);
     }).then(function () {
       putCache();
+      return saveToLibrary(v);
+    }).then(function () {
       showPlayer(false);
     }).catch(function (e) {
       if (e && e.message === "cancel") { setStatus("انلغت."); setBar(0); }
@@ -366,6 +369,19 @@
       llmNote = GT.llmReady() && GT.getLastError() ? GT.getLastError() : "";
     });
   }
+  // نحفظ الفيديو المترجم في المكتبة (الجمل + صورة صغيرة من أول مشهد فيه كلام)
+  function saveToLibrary(v) {
+    var t = segments.length ? segments[0].start + 0.3 : 0;
+    return seek(v, t).then(function () {
+      var thumb = GTStore.thumbFrom(v, v.videoWidth, v.videoHeight, null);
+      return GTStore.Library.add({
+        type: "video", title: fileName || "فيديو", sig: "video|" + fileSig, thumb: thumb,
+        engine: Object.keys(engines).join(" و "),
+        lines: segments.map(function (s) { return { start: s.start, end: s.end, en: s.en, ar: s.ar }; })
+      });
+    }).catch(function () {});
+  }
+
   // ---------------------------------------------------- المشغّل
   function showPlayer(fromCache) {
     $("cachedNote").classList.toggle("hidden", !fromCache);
